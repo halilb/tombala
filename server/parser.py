@@ -1,31 +1,63 @@
 import threading
 import json
+import traceback
 
+from room import Room
 
 class Parser():
-    def __init__(self):
-        self.command = ''
-        self.data = ''
-
-    def clear(self):
-        self.command = ''
-        self.data = ''
+    def __init__(self, rooms):
+        self.state = 'logged_in'
+        self.rooms = rooms
 
     def parseMessage(self, client, message):
-        self.clear()
-
         message = message.strip()
-        self.command = message[:6]
+        command = message[:6]
 
         try:
-            self.data = json.loads(message[7:])
-            response = 'Command %s, data %s' % (self.command, self.data)
-            print response
-            sequence = self.data['seq']
-            return 'SSUCCS:{"seq":%s}' % (sequence)
+            data = json.loads(message[7:])
+
+            try:
+                response = self.processCommand(client, command, data);
+                isSuccess = response['type'] != 'err'
+                resCode = 'SSUCCS' if isSuccess else 'SERROR'
+                return '%s:%s' % (resCode, response)
+            except Exception, err:
+                print(traceback.format_exc())
+                return 'SERROR:{"message":"Invalid command"}'
 
         except ValueError, e:
             print '%s when reading "%s"' % (str(e), message)
             return 'SERROR:{"message":"Wrong message format"}'
 
+    def processCommand(self, client, cmd, data):
+        response = {}
+        isError = False
+        msg = ''
 
+        if self.state == 'new':
+            username = data['username']
+            if client.setUsername(username):
+                self.state = 'logged_in'
+                msg = 'Welcome ', username
+            else:
+                isError = True
+                msg = '%s already exists on the system. Please choose another username!' % (username)
+
+        elif self.state == 'logged_in':
+            if cmd == 'CCROOM':
+                roomname = data['roomname']
+                newRoom = Room(roomname, data['countdown'])
+                self.rooms.append(newRoom);
+                msg = '%s is created' % (roomname);
+            elif cmd == 'CLROOM':
+                print 'list rooms'
+            elif cmd == 'CJROOM':
+                print 'join room'
+                newRoom.addPlayer(client)
+                self.state = 'in_room'
+
+        response['type'] = 'err' if isError else 'success'
+        response['seq'] = data['seq']
+        response['message'] = msg
+
+        return response

@@ -8,6 +8,7 @@ signal.signal(signal.SIGINT, signal.SIG_DFL)
 
 port = 8888
 client_threads = []
+rooms = []
 client_count = 0
 
 class ClientThread(threading.Thread):
@@ -17,7 +18,7 @@ class ClientThread(threading.Thread):
         self.client_socket = client_socket
         self.username = ""
         self.connection_open = True
-        self.parser = Parser()
+        self.parser = Parser(rooms)
 
     def run(self):
         while self.connection_open:
@@ -25,7 +26,7 @@ class ClientThread(threading.Thread):
             self.printMessage('message from client: {}'.format(message))
             response = self.parser.parseMessage(self, message)
             self.printMessage('response to client: {}'.format(response))
-            if(response == ''):
+            if response == '':
                 break
             else:
                 self.client_socket.send(response)
@@ -34,6 +35,18 @@ class ClientThread(threading.Thread):
 
     def printMessage(self, text):
         print text, 'client_id: ',self.clientThreadID 
+
+    def getUsername(self):
+        print "username requested ", self.username
+        return self.username
+
+    def setUsername(self, username):
+        for client in client_threads:
+            print client.getUsername()
+            if client.getUsername() == username:
+                return False
+        self.username = username
+        return True
 
 
 serverThreadLock = threading.Lock()
