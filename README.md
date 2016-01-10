@@ -63,6 +63,8 @@ There are two general types of communication:
 
 2. When state changes on the server, it broadcasts messages to related clients.
 
+All messages shall close with a line break character \n.
+
 ## 2.1. Client Request Format
 
 Tombala clients are responsible for adding a request identifier to the body message. The identifier is added to the response body by the server, and client uses that to correspond server responses with the relavant request. The identifier will be called as sequence number.
@@ -206,7 +208,8 @@ Expected response fields:
 
 * **rooms**(*array*): This field contains a collection with Room objects.
 * **room.roomname**(*string*): Alias for the room.
-* **room.countdown**(*integer*): This is used to calculate the starting date of the game. It is defined in seconds.
+* **room.startTime**(*date*): Starting date of the game. It is defined in seconds.
+* **room.userlist**(*array*): Contains user names of current users in the room.
 
 Response example:
 
@@ -214,10 +217,12 @@ Response example:
         "seq": 111,
         "rooms": [{
         	"roomname": "room1",
-            "countdown": 102
+            "startTime": "2016-01-10 19:22:51.899637",
+            "userlist": ["user1", "user2"]
         }, {
             "roomname": "room2",
-            "countdown": 237
+            "startTime": "2016-01-10 19:23:51.899637"
+            "userlist": ["user3", "user4"]
         }]
     }
     

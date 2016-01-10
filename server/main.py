@@ -22,14 +22,27 @@ class ClientThread(threading.Thread):
 
     def run(self):
         while self.connection_open:
-            message = self.client_socket.recv(4096)
-            self.printMessage('message from client: {}'.format(message))
-            response = self.parser.parseMessage(self, message)
-            self.printMessage('response to client: {}'.format(response))
-            if response == '':
+            data = self.client_socket.recv(4096)
+            messages = data.split('\n')
+            closeConnection = False
+
+            for message in messages:
+                response = ''
+                print 'message:', message
+
+                if len(message) > 0:
+                    response = self.parser.parseMessage(self, message)
+                    self.printMessage('response to client: {}'.format(response))
+
+                if response == '':
+                    closeConnection = True
+                    break
+                else:
+                    self.client_socket.send(response)
+
+            if closeConnection:
                 break
-            else:
-                self.client_socket.send(response)
+
         self.client_socket.close()
         client_threads.remove(self)
 
@@ -42,15 +55,24 @@ class ClientThread(threading.Thread):
 
     def setUsername(self, username):
         for client in client_threads:
-            print client.getUsername()
             if client.getUsername() == username:
                 return False
         self.username = username
         return True
 
+    def getRoomList(self):
+        roomList = []
+        for room in rooms:
+            roomList.append(room.getDetails())
+        return roomList
+
+    def joinRoom(self, roomname):
+        for room in rooms:
+            if room.name == roomname:
+                room.addPlayer(self.username)
+
 
 serverThreadLock = threading.Lock()
-
 sock = socket.socket()
 sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 print "Server is started on port ", port

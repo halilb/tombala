@@ -6,7 +6,7 @@ from room import Room
 
 class Parser():
     def __init__(self, rooms):
-        self.state = 'logged_in'
+        self.state = 'new'
         self.rooms = rooms
 
     def parseMessage(self, client, message):
@@ -20,6 +20,7 @@ class Parser():
                 response = self.processCommand(client, command, data);
                 isSuccess = response['type'] != 'err'
                 resCode = 'SSUCCS' if isSuccess else 'SERROR'
+                del response['type']
                 return '%s:%s' % (resCode, response)
             except Exception, err:
                 print(traceback.format_exc())
@@ -49,15 +50,18 @@ class Parser():
                 newRoom = Room(roomname, data['countdown'])
                 self.rooms.append(newRoom);
                 msg = '%s is created' % (roomname);
-            elif cmd == 'CLROOM':
-                print 'list rooms'
+
             elif cmd == 'CJROOM':
-                print 'join room'
-                newRoom.addPlayer(client)
+                roomname = data['roomname']
+                client.joinRoom(roomname)
                 self.state = 'in_room'
+
+        elif cmd == 'CLROOM':
+            response['rooms'] = client.getRoomList()
 
         response['type'] = 'err' if isError else 'success'
         response['seq'] = data['seq']
-        response['message'] = msg
+        if len(msg):
+            response['message'] = msg
 
         return response
