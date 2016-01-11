@@ -115,9 +115,9 @@ class ReaderThread (threading.Thread):
 
 
 
-player1 = Player("player1", 0.1)
-player2 = Player("player2", 0.1)
-player3 = Player("player3", 0.1)
+player1 = Player("player1", 3)
+player2 = Player("player2", 6)
+player3 = Player("player3", 2)
 
 player1.start()
 player2.start()
