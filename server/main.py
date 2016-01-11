@@ -1,6 +1,7 @@
 import threading
 import socket
 import signal
+import json
 
 from parser import Parser
 
@@ -11,7 +12,7 @@ client_threads = []
 rooms = []
 client_count = 0
 
-class ClientThread(threading.Thread):
+class Client(threading.Thread):
     def __init__(self, clientThreadID, client_socket):
         threading.Thread.__init__(self)
         self.clientThreadID = clientThreadID
@@ -22,43 +23,57 @@ class ClientThread(threading.Thread):
 
     def run(self):
         while self.connection_open:
-            data = self.client_socket.recv(4096)
-            messages = data.split('\n')
-            closeConnection = False
+            data = self.client_socket.recv(1024)
+            if len(data) == 0:
+                self.connection_open = False
+                break
 
+            messages = data.split('\n')
+            
             for message in messages:
-                response = ''
-                print 'message:', message
+                self.printMessage('message from client: ' + message)
 
                 if len(message) > 0:
-                    response = self.parser.parseMessage(self, message)
-                    self.printMessage('response to client: {}'.format(response))
+                    cmd, body = self.parser.parseMessage(self, message)
+                    self.broadcastMessage(cmd, body)
 
-                if response == '':
-                    closeConnection = True
-                    break
-                else:
-                    self.client_socket.send(response)
-
-            if closeConnection:
-                break
 
         self.client_socket.close()
         client_threads.remove(self)
 
+    def broadcastMessage(self, cmd, body):
+        body = json.dumps(body)
+        message = '%s:%s\n' % (cmd, body)
+        self.printMessage('response to client: {}'.format(message))
+        self.client_socket.send(message)
+
     def printMessage(self, text):
         print text, 'client_id: ',self.clientThreadID 
 
-    def getUsername(self):
-        print "username requested ", self.username
+    def checkCinko(self, claim):
+        if claim <= self.lastCinko:
+            return False
+
+        real = self.playCard.calculateCinkos(self.room.oldNumbers)
+        if claim == real:
+            self.lastCinko = real
+            self.room.broadcastCinko(self, real)
+
+        return claim == real
+
+    def getUserName(self):
         return self.username
 
     def setUsername(self, username):
         for client in client_threads:
-            if client.getUsername() == username:
+            if client.getUserName() == username:
                 return False
         self.username = username
         return True
+
+    def setPlayCard(self, card):
+        self.playCard = card
+        self.broadcastMessage('BGCARD', card)
 
     def getRoomList(self):
         roomList = []
@@ -69,7 +84,22 @@ class ClientThread(threading.Thread):
     def joinRoom(self, roomname):
         for room in rooms:
             if room.name == roomname:
-                room.addPlayer(self.username)
+                if not room.hasStarted:
+                    room.addPlayer(self)
+                    self.room = room
+                    self.lastCinko = 0
+                    return ''
+                return 'Game has started'
+        return 'Room not found'
+
+    def quitRoom(self):
+        if self.room:
+            self.room.removePlayer(self)
+            self.room = None
+            self.playCard = None
+            self.parser.state = 'logged_in'
+            return True
+        return False
 
 
 serverThreadLock = threading.Lock()
@@ -85,7 +115,7 @@ while True:
     serverThreadLock.acquire()
     global client_count
     client_count = client_count + 1
-    client_thread = ClientThread(client_count, c)
+    client_thread = Client(client_count, c)
     client_thread.start()
     client_threads.append(client_thread)
     print 'Successfully created client thread', client_count-1

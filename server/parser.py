@@ -21,14 +21,14 @@ class Parser():
                 isSuccess = response['type'] != 'err'
                 resCode = 'SSUCCS' if isSuccess else 'SERROR'
                 del response['type']
-                return '%s:%s' % (resCode, response)
+
+                return resCode, response
             except Exception, err:
                 print(traceback.format_exc())
-                return 'SERROR:{"message":"Invalid command"}'
+                return 'SERROR', {'message': 'Invalid command'}
 
         except ValueError, e:
-            print '%s when reading "%s"' % (str(e), message)
-            return 'SERROR:{"message":"Wrong message format"}'
+            return 'SERROR', {'message': 'Wrong message format'}
 
     def processCommand(self, client, cmd, data):
         response = {}
@@ -39,10 +39,13 @@ class Parser():
             username = data['username']
             if client.setUsername(username):
                 self.state = 'logged_in'
-                msg = 'Welcome ', username
+                msg = 'Welcome ' + username
             else:
                 isError = True
                 msg = '%s already exists on the system. Please choose another username!' % (username)
+
+        elif cmd == 'CLROOM':
+            response['rooms'] = client.getRoomList()
 
         elif self.state == 'logged_in':
             if cmd == 'CCROOM':
@@ -53,11 +56,42 @@ class Parser():
 
             elif cmd == 'CJROOM':
                 roomname = data['roomname']
-                client.joinRoom(roomname)
-                self.state = 'in_room'
+                result = client.joinRoom(roomname)
+                if len(result) == 0:
+                    client.readyForNewNumber = True
+                    self.state = 'in_game'
+                else:
+                    isError = True
+                    msg = result
 
-        elif cmd == 'CLROOM':
-            response['rooms'] = client.getRoomList()
+
+        elif self.state == 'in_game':
+            if cmd == 'CNNMBR':
+                if client.readyForNewNumber:
+                    isError = True
+                    msg = 'You already requested new number in this turn'
+                else:
+                    msg = 'Next number will be broadcasted when everyone proceeds!'
+                    client.readyForNewNumber = True
+                    client.room.sendNewNumber()
+
+            elif cmd == 'CQROOM':
+                roomName = client.room.name
+                if client.quitRoom():
+                    msg = 'You have left room ' + roomName
+                    self.state = 'logged_in'
+                else:
+                    isError = True
+                    msg = 'You are not in a room currently'
+
+            elif cmd == 'CCINKO':
+                total = data['total']
+                if client.checkCinko(total):
+                    msg = 'Congratulations!'
+                else:
+                    isError = True
+                    msg = 'Your cinko claim is wrong!'
+
 
         response['type'] = 'err' if isError else 'success'
         response['seq'] = data['seq']

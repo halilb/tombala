@@ -42,7 +42,7 @@ User shall quit a game room before the game finishes. He can then join any other
 
 A game card contains three rows and five numbers on each row. It is randomly generated and distributed when the game starts.
 
-A new number should be randomly generated distributed when all users want to proceed to the next turn. This number should be between 1 and 99. User checks whether he has the number for the current turn and proceeds. The game should be on hold until all users proceed to the next turn.
+A new number should be randomly generated distributed when all users want to proceed to the next turn. This number should be between 1 and 90. User checks whether he has the number for the current turn and proceeds. The game should be on hold until all users proceed to the next turn.
 
 When a user marks every number in a row of the game card, he should announce it as *cinko*. This claim must be validated and distributed to the other users. Users are responsible for following the numbers and announcing cinkos. Game is over when a user achieves three *cinkos*.
 
@@ -265,17 +265,12 @@ Error response example:
     
 #### CQROOM: Client Quit Room
 
-*CQROOM* is used to quit a game room.
-
-Request fields:
-
-- **roomname**(*string*): Room alias.
+*CQROOM* is used to quit from user's current game room.
 
 Example request:
 
     CQROOM:{
         "seq": 111,
-        "roomname": "room1"
     }
 
 Expected responses: SSUCCS, SERROR
@@ -295,7 +290,7 @@ Error response example:
 
     SERROR:{
         "seq": 111,
-        "message": "room1 does not exist!"
+        "message": "You already aren't in a room currently!"
     }
     
 #### CCINKO: Client Cinko
@@ -381,7 +376,7 @@ This message is broadcasted when the game starts in the room.
 Message fields:
 
 - **gamecard**(*array*): It has three rows represeting rows in an actual game card.
-- **gamecard.row**(*array*): Every row has five integer numbers between 1 and 99. Clients shall use this field to determine cinkos. 
+- **gamecard.row**(*array*): Every row has five integer numbers between 1 and 90. Clients shall use this field to determine cinkos. 
 
 Example message:
 
@@ -399,7 +394,7 @@ Example message:
 
 Message fields:
 
-- **number**(*integer*): A random number generated on the server. Minimum 1, maximum 99. Generated numbers must be unique for any given game session. Clients use this number to mark their game cards. Clients have to issue *CNEXT* request using this number as a parameter for proceeding to next turn.
+- **number**(*integer*): A random number generated on the server. Minimum 1, maximum 90. Generated numbers must be unique for any given game session. Clients use this number to mark their game cards. Clients have to issue *CNEXT* request using this number as a parameter for proceeding to next turn.
 
 Example message:
 
