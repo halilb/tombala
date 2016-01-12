@@ -13,10 +13,12 @@ class ReaderThread (threading.Thread):
         self.messageList = messageList
 
     def incoming_parser(self, data):
-        print 'data ' + data
-        print 'cmd ' + data[:5]
-        print 'rest ' + data[7:]
-        resType = data[:5]
+        print 'data:' + data
+        print 'cmd:' + data[:6]
+        print 'rest:' + data[7:]
+        resType = data[:6]
+
+        print 'EXCEPTIONOLACAK' + data[7:]
         body = json.loads(data[7:])
         seq = -1
 
@@ -30,10 +32,12 @@ class ReaderThread (threading.Thread):
             request = self.messageList[seq]
             reqType = request['reqType']
             body['reqType'] = reqType
+            body['isSuccess'] = isSuccess
 
             return body
         else:
             body['reqType'] = resType
+            body['isSuccess'] = True
             return body
 
     def testMessage(self, msg):
@@ -43,6 +47,10 @@ class ReaderThread (threading.Thread):
     def run(self):
         while True:
             data = self.csoc.recv(1024)
-            msg = self.incoming_parser(data)
-            if msg:
-                self.screenQueue.put(msg)
+            if data:
+                for message in data.split('\n'):
+                    if len(message) > 0:
+                        message = self.incoming_parser(message)
+                        self.screenQueue.put(message)
+            else:
+                break

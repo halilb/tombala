@@ -3,7 +3,7 @@ import json
 
 class PlayCard(dict):
     def __init__(self):
-        numbers = random.sample(range(1, 90), 15)
+        numbers = random.sample(range(1, 91), 15)
         rows = []
         rows.append(numbers[:5])
         rows.append(numbers[5:10])

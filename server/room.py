@@ -14,7 +14,7 @@ class Room(threading.Thread):
         self.hasStarted = False
 
         # generate game numbers
-        self.futureNumbers = random.sample(range(1, 90), 89)
+        self.futureNumbers = random.sample(range(1, 91), 90)
         self.oldNumbers = []
 
         now = datetime.datetime.now()
@@ -49,8 +49,6 @@ class Room(threading.Thread):
 
             else:
                 print 'We are out of numbers. Something is wrong'
-                sys.exit()
-
 
     def broadcastCinko(self, player, total):
         message = {

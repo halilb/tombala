@@ -20,7 +20,6 @@ class Client(threading.Thread):
         self.username = ""
         self.connection_open = True
         self.parser = Parser(rooms)
-        # self.client_socket.send('BGCARD:{"gamecard": [[79, 78, 10, 25, 23], [4, 64, 11, 47, 54], [34, 57, 83, 5, 12]]}')
 
     def run(self):
         while self.connection_open:
@@ -40,13 +39,15 @@ class Client(threading.Thread):
 
 
         self.client_socket.close()
+        self.room.removePlayer(self)
         client_threads.remove(self)
 
     def broadcastMessage(self, cmd, body):
         body = json.dumps(body)
-        message = '%s:%s\n' % (cmd, body)
-        self.printMessage('response to client: {}'.format(message))
+        body = body.strip()
+        message = cmd.strip() + ':' + body + '\n'
         self.client_socket.send(message)
+        self.printMessage('response to client: {}'.format(message))
 
     def printMessage(self, text):
         print text, 'client_id: ',self.clientThreadID 
@@ -55,7 +56,9 @@ class Client(threading.Thread):
         if claim <= self.lastCinko:
             return False
 
+        print 'old' + str(self.room.oldNumbers)
         real = self.playCard.calculateCinkos(self.room.oldNumbers)
+        print 'real ' + str(real) + ' claim ' + str(claim)
         if claim == real:
             self.lastCinko = real
             self.room.broadcastCinko(self, real)

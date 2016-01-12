@@ -38,7 +38,7 @@ class WriterThread (threading.Thread):
                 message['countdown'] = int(words[2])
 
             elif cmd == 'next':
-                reqType == 'CNNMBR'
+                reqType = 'CNNMBR'
 
             elif cmd == 'mark':
                 message['reqType'] = 'MARK'
@@ -46,9 +46,12 @@ class WriterThread (threading.Thread):
                 self.screenQueue.put(message)
                 return
             
-            elif cmd == 'announce':
-                message['reqType'] = 'CCINKO'
+            elif cmd == 'cinko':
+                reqType = 'CCINKO'
                 message['total'] = int(words[1])
+
+            elif cmd == 'quit':
+                reqType = 'CQROOM'
 
         if len(reqType) == 0:
             return

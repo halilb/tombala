@@ -9,6 +9,7 @@ class ClientDialog(QDialog):
         self.threadQueue = threadQueue
         self.screenQueue = screenQueue
         self.markedNumbers = []
+        self.oldNumbers = []
         self.cinkoList = {}
         # create a Qt application --- every PyQt app needs one
         self.qt_app = QApplication(sys.argv)
@@ -30,12 +31,15 @@ class ClientDialog(QDialog):
         self.channel.setMinimumSize(QSize(240, 0))
         self.cardText = QTextBrowser()
         self.cardText.setMinimumSize(QSize(240, 0))
+        self.cardText.setText('PLAY CARD')
         # The send button
         self.send_button = QPushButton('&Send Command')
         self.next_button = QPushButton('&Next Number')
         # The users' section
         self.userList = QTextBrowser()
+        self.userList.setText('USERS IN ROOM\n')
         self.rooms = QTextBrowser()
+        self.rooms.setText('ROOMS(/rooms to refresh)\n')
         # Connect the Go button to its callback
         self.send_button.clicked.connect(self.outgoing_parser)
         self.next_button.clicked.connect(self.next_number)
@@ -61,7 +65,7 @@ class ClientDialog(QDialog):
         self.channel.append('Use /create {roomname} {countdow} to create a new game room')
         self.channel.append('Use /join {roomname} to join a room')
         self.channel.append('Use /mark {number} to mark a number in your playcard')
-        self.channel.append('Use /announce {total} to announce cinko')
+        self.channel.append('Use /cinko {total} to announce cinko')
         self.channel.append('Use /quit to leave a room')
 
     def cprint(self, data):
@@ -77,14 +81,14 @@ class ClientDialog(QDialog):
                 self.processIncoming(message)
 
     def displayRooms(self, rooms):
-        text = ''
+        text = 'ROOMS(/rooms to refresh)\n'
         for room in rooms:
             text += 'Room: %s ::: StartDate: %s ::: Players: %s\n' % (room['roomname'], room['startTime'], str(room['userlist']))
 
         self.rooms.setText(text)
 
     def updatePlayCard(self):
-        text = ''
+        text = 'PLAYCARD\n'
         for row in self.mycard:
             rowText = ''
             for number in row:
@@ -100,26 +104,38 @@ class ClientDialog(QDialog):
     def processIncoming(self, data):
         print 'processIncoming ' + str(data)
         reqType = data['reqType']
+        isSuccess = True
+        if 'isSuccess' in data:
+            isSuccess = data['isSuccess']
         print 'processIncoming ' + reqType
 
-        if reqType == 'CLOGIN':
+        if reqType == 'SERROR':
+            self.cprint(data['message'])
+
+        elif reqType == 'CLOGIN':
             self.cprint(data['message'])
 
         elif reqType == 'CLROOM':
             self.displayRooms(data['rooms'])
         
         elif reqType == 'CJROOM':
-            self.cprint('Joined the room!')
+            mes = 'Joined the room' if isSuccess else 'Could not join the room'
+            self.cprint(mes)
 
         elif reqType == 'CCROOM':
             self.cprint(data['message'])
 
-        elif reqType == 'BGCAR':
+        elif reqType == 'BGCARD':
             self.mycard = data['gamecard']
             self.updatePlayCard()
 
         elif reqType == 'BNUMBR':
-            self.cprint('new number: ' + data['number'])
+            self.oldNumbers.append(data['number'])
+            self.cprint('new number: ' + str(data['number']))
+
+            print 'len' + str(len(self.oldNumbers))
+            if len(self.oldNumbers) == 90:
+                self.cprint('This was the last number')
 
         elif reqType == 'MARK':
             self.markedNumbers.append(int(data['number']))
@@ -129,14 +145,21 @@ class ClientDialog(QDialog):
             username = data['username']
             self.cinkoList[username] = data['total']
             self.updatePlayers()
+            self.cprint(username + ' now has ' + str(data['total']) + ' cinkos')
+            if data['total'] == 3:
+                self.cprint(username + ' has won the game!')
+                self.cprint('Game is over')
 
         elif reqType == 'BUSRLS':
             self.players = data['userlist']
             self.updatePlayers()
 
+        elif reqType == 'CCINKO':
+            self.cprint(data['message'])
+
 
     def updatePlayers(self):
-        text = ''
+        text = 'USERS IN ROOM\n'
         for player in self.players:
             temp = player
             if player in self.cinkoList:
