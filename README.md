@@ -334,15 +334,10 @@ Error response example:
 
 *CNNMBR* is used to inform server that the client is ready for a new number. It is client's responbisility to check his game card after receiving a new number. After checking the game card, clients have to issue *CNNMBR* request. Game will not proceed until all participating users send a *CNNMBR* request.
 
-Request fields:
-
-- **lastNumber**(*integer*): Last received tombala number.
-
 Example request:
 
     CNNMBR:{
-        "seq": 111,
-        "lastNumber": 37
+        "seq": 111
     }
 
 Expected responses: SSUCCS, SERROR
@@ -382,9 +377,9 @@ Example message:
 
     BGCARD:{
         "gamecard": [
-        	"row1": [7, 26, 46, 63, 72],
-            "row2": [15, 34, 56, 76, 89],
-            "row3": [5, 22, 48, 62, 86],
+          [[77, 1, 18, 4, 43],
+          [6s1, 27, 25, 16, 56],
+          [46, 80, 31, 73, 45]]
         ]
     }
     

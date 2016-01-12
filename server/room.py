@@ -25,6 +25,7 @@ class Room(threading.Thread):
     def startGame(self):
         print 'game started'
         self.hasStarted = True
+        self.broadcastPlayerList()
         for player in self.players:
             playCard = PlayCard()
             player.setPlayCard(playCard)
@@ -64,12 +65,17 @@ class Room(threading.Thread):
 
     def addPlayer(self, player):
         self.players.append(player);
+        self.broadcastPlayerList()
 
     def removePlayer(self, player):
         self.players.remove(player)
+        self.broadcastPlayerList()
+
+    def broadcastPlayerList(self):
         usernames = [x.getUserName() for x in self.players]
+        message = {'userlist': usernames}
         for player in self.players:
-            player.broadcastMessage('BUSRLS', usernames)
+            player.broadcastMessage('BUSRLS', message)
 
 
     def getDetails(self):

@@ -20,6 +20,7 @@ class Client(threading.Thread):
         self.username = ""
         self.connection_open = True
         self.parser = Parser(rooms)
+        # self.client_socket.send('BGCARD:{"gamecard": [[79, 78, 10, 25, 23], [4, 64, 11, 47, 54], [34, 57, 83, 5, 12]]}')
 
     def run(self):
         while self.connection_open:
@@ -89,8 +90,8 @@ class Client(threading.Thread):
                     self.room = room
                     self.lastCinko = 0
                     return ''
-                return 'Game has started'
-        return 'Room not found'
+                return 'Sorry, Game has already started'
+        return 'Sorry, room is not found'
 
     def quitRoom(self):
         if self.room:

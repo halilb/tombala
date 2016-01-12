@@ -50,9 +50,20 @@ class Parser():
         elif self.state == 'logged_in':
             if cmd == 'CCROOM':
                 roomname = data['roomname']
-                newRoom = Room(roomname, data['countdown'])
-                self.rooms.append(newRoom);
-                msg = '%s is created' % (roomname);
+
+                roomExists = False
+                for room in self.rooms:
+                    if room.name == roomname:
+                        roomExists = True
+                        break
+
+                if roomExists:
+                    isError = True
+                    msg = '%s room already exists, please choose another one!' % (roomname)
+                else:
+                    newRoom = Room(roomname, data['countdown'])
+                    self.rooms.append(newRoom);
+                    msg = '%s is created' % (roomname);
 
             elif cmd == 'CJROOM':
                 roomname = data['roomname']
