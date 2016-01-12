@@ -1,11 +1,29 @@
-Tombala Protocol
+Tombala Game
 ===========================
+
+# INSTRUCTIONS
+
+* Clone this repo.
+* Run *python server/main.py* to run the server.
+* Run *python client/main.py* to run the client.
+* /login {username} to set user name.
+* /create {roomname} {countdown} to create a new room. Game will start after {countdown} seconds.
+* /join {roomname} to join a game.
+* /rooms to display existing rooms.
+* /quit to quit a game.
+* /mark {number} if you have the number in your playcard.
+* /cinko {total} to announce your new cinko.
+* Click *Next Number* button to request new number. A new number will be distributed when all users in the room declare they are ready.
+
+# PROTOCOL
 
 *Tombola* is a board game originated in Italy. In Turkey, it is called *Tombala* and traditionally played in new year's eve. It's similar to *bingo* game.
 
 ![Tombala game card image](https://upload.wikimedia.org/wikipedia/commons/thumb/b/b6/Tombola.jpg/320px-Tombola.jpg)
 
 This document defines functional requirements for a simple tombala game and offers a simple text-based protocol desing which will be used for communication between Tombala Clients and Tombala Server. The protocol is designed to run on top of the TCP.
+
+This protocol is designed to support multiple *tombala* sessions simultaneously.
 
 # 1. Functional Requirements
 
